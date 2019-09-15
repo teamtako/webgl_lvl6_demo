@@ -5,16 +5,23 @@
     <script src='webgl_demo.js'></script>
     <script id='basicVertexID' type='type/glsl'>#version 300 es
     in vec3 position;
+    in vec2 uvCoordinate;
+    out vec2 uvCoord;
+
     void main(){
         gl_Position = vec4(position, 1.0);
+        uvCoord = uvCoordinate;
     }
     </script>
 
     <script id='basicFragmentID' type='type/glsl'>#version 300 es
     precision mediump float;
     out vec4 pixelColor;
+    in vec2 uvCoord;
+    uniform sampler2D texPixels;
     void main(){
-        pixelColor = vec4(0.5, 0.3, 0.1, 1.0);
+        //pixelColor = vec4(0.5, 0.3, 0.1, 1.0);
+        pixelColor = texture(texPixels,uvCoord);
     }
     </script>
 </html>
