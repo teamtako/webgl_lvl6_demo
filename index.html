@@ -1,0 +1,20 @@
+<html>
+    <meta charset='utf-8'/>
+    <canvas id='canvasID'></canvas>
+    <script src='graphics_utilities.js'></script>
+    <script src='webgl_demo.js'></script>
+    <script id='basicVertexID' type='type/glsl'>#version 300 es
+    in vec3 position;
+    void main(){
+        gl_Position = vec4(position, 1.0);
+    }
+    </script>
+
+    <script id='basicFragmentID' type='type/glsl'>#version 300 es
+    precision mediump float;
+    out vec4 pixelColor;
+    void main(){
+        pixelColor = vec4(0.5, 0.3, 0.1, 1.0);
+    }
+    </script>
+</html>
