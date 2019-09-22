@@ -8,8 +8,11 @@
     in vec2 uvCoordinate;
     out vec2 uvCoord;
 
+    uniform mat4 projectionViewMatrix;
+    uniform mat4 modelMatrix;
+
     void main(){
-        gl_Position = vec4(position, 1.0);
+        gl_Position = projectionViewMatrix * modelMatrix * vec4(position, 1.0);
         uvCoord = uvCoordinate;
     }
     </script>
@@ -20,8 +23,7 @@
     in vec2 uvCoord;
     uniform sampler2D texPixels;
     void main(){
-        //pixelColor = vec4(0.5, 0.3, 0.1, 1.0);
-        pixelColor = texture(texPixels,uvCoord);
+        pixelColor = texture(texPixels, uvCoord);
     }
     </script>
 </html>

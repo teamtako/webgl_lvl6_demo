@@ -10,7 +10,59 @@ var positionAttribID;
 var uvCoordID
 var checkTexture;
 
+var projectionViewMatrixID;
+var modelMatrixID;
+
+var indices;
+
+var camera;
+
+const KEY_0 = 48;
+const KEY_1 = 49;
+const KEY_2 = 50;
+const KEY_3 = 51;
+const KEY_4 = 52;
+const KEY_5 = 53;
+const KEY_6 = 54;
+const KEY_7 = 55;
+const KEY_8 = 56;
+const KEY_9 = 57;
+const KEY_A = 65;
+const KEY_B = 66;
+const KEY_C = 67;
+const KEY_D = 68;
+const KEY_E = 69;
+const KEY_F = 70;
+const KEY_G = 71;
+const KEY_H = 72;
+const KEY_I = 73;
+const KEY_J = 74;
+const KEY_K = 75;
+const KEY_L = 76;
+const KEY_M = 77;
+const KEY_N = 78;
+const KEY_O = 79;
+const KEY_P = 80;
+const KEY_Q = 81;
+const KEY_R = 82;
+const KEY_S = 83;
+const KEY_T = 84;
+const KEY_U = 85;
+const KEY_V = 86;
+const KEY_W = 87;
+const KEY_X = 88;
+const KEY_Y = 89;
+const KEY_Z = 90;
+const KEY_UP = 38;
+const KEY_DOWN = 40;
+const KEY_LEFT = 37;
+const KEY_RIGHT = 39;
+const KEY_SPACE = 32;
+
 window.onload = function(){
+    window.addEventListener("keyup", keyUp);
+    window.addEventListener("keydown", keyDown);
+
     canvas = document.getElementById("canvasID");
     gl = canvas.getContext("webgl2");
 
@@ -28,46 +80,176 @@ window.onload = function(){
     gl.useProgram(shaderProgram);
 
     let vertices = [
-        -0.5, -0.5, 0.0, 0.0,0.0,
-        -0.5, 0.5, 0.0, 0.0, 1.0,
-         0.5, 0.5, 0.0, 1,0 ,1.0,
-         0.5,-0.5,0.0,1.0,0.0
+        -0.5, -0.5, 0.0,    0.0, 1.0,
+        -0.5, 0.5, 0.0,     0.0, 0.0,
+         0.5, 0.5, 0.0,     1.0, 0.0,
+         0.5, -0.5, 0.0,    1.0, 1.0
     ];
 
-    let indices = [
-        0,1,2,2,3,0
+    indices = [
+        0, 1, 2, 2, 3, 0
     ];
 
     let texPixels = [
-        0,0,0,255, 255,255,255,255,
-        255,255,255,255, 0,0,0,255
+        0, 0, 0, 255,   255, 255, 255, 255,
+        255, 255, 255, 255,     0, 0, 0, 255
     ]
-    
 
+    checkTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, checkTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(texPixels));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    
     vertexArray = gl.createVertexArray();
     gl.bindVertexArray(vertexArray);
     vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new this.Float32Array(vertices), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     indexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint32Array(indices),gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW);
 
-    checkTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D,checkTexture);
-    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,2,2,0,gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(texPixels));
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR)
     positionAttribID = gl.getAttribLocation(shaderProgram, "position");
     uvCoordID = gl.getAttribLocation(shaderProgram, "uvCoordinate");
+
+    projectionViewMatrixID = gl.getUniformLocation(shaderProgram, "projectionViewMatrix");
+    modelMatrixID = gl.getUniformLocation(shaderProgram, "modelMatrix");
+
+    camera = new Camera();
+    camera.setPerspectiveProjection(70.0, canvas.width / canvas.height, 0.001, 1000.0);
+    camera.position.z += 5;
+    camera.updateView(0);
+    
+    gl.uniformMatrix4fv(projectionViewMatrixID, gl.FALSE, camera.viewMatrix.m);    
+    gl.uniformMatrix4fv(modelMatrixID, gl.FALSE, new Matrix4().m);
+
     gl.enableVertexAttribArray(positionAttribID);
     gl.enableVertexAttribArray(uvCoordID);
     gl.vertexAttribPointer(positionAttribID, 3, gl.FLOAT, gl.FALSE, 20, 0);
-    gl.vertexAttribPointer(uvCoordID,2,gl.FLOAT,gl.FALSE,20,12)
+    gl.vertexAttribPointer(uvCoordID, 2, gl.FLOAT, gl.FALSE, 20, 12);
 
-    //gl.drawArrays(gl.TRIANGLES, 0, 3);
-    //gl.drawArrays(gl.TRIANGLES,0,3);
-    gl.drawElements(gl.TRIANGLES,6,gl.UNSIGNED_INT,0);
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0);
+
+    setInterval(updateFrame, 1);
+}
+
+function updateFrame(){
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    camera.updateView(0.01);
+    
+    gl.uniformMatrix4fv(projectionViewMatrixID, gl.FALSE, camera.viewMatrix.m);    
+    gl.uniformMatrix4fv(modelMatrixID, gl.FALSE, new Matrix4().m);
+
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0);
+}
+
+function keyUp(event){ 
+    switch(event.keyCode){
+        case KEY_W:{
+            camera.moveForward = false;
+            break;
+        }
+        case KEY_A:{
+            camera.moveLeft = false;
+            break;
+        }
+        case KEY_S:{
+            camera.moveBack = false;
+            break;
+        }
+        case KEY_D:{
+            camera.moveRight = false;
+            break;
+        }
+        case KEY_R:{
+            camera.moveUp = false;
+            break;
+        }
+        case KEY_F:{
+            camera.moveDown = false;
+            break;
+        }
+        case KEY_UP:{
+            camera.pitchUp = false;
+            break;
+        }
+        case KEY_DOWN:{
+            camera.pitchDown = false;
+            break;
+        }
+        case KEY_LEFT:{
+            camera.yawLeft = false;
+            break;
+        }
+        case KEY_RIGHT:{
+            camera.yawRight = false;
+            break;
+        }
+        case KEY_Q:{
+            camera.rollLeft = false;
+            break;
+        }
+        case KEY_E:{
+            camera.rollRight = false;
+            break;
+        }
+    }
+}
+
+var an = true;
+function keyDown(event){
+    switch(event.keyCode){
+        case KEY_W:{
+            camera.moveForward = true;
+            break;
+        }
+        case KEY_A:{
+            camera.moveLeft = true;
+            break;
+        }
+        case KEY_S:{
+            camera.moveBack = true;
+            break;
+        }
+        case KEY_D:{
+            camera.moveRight = true;
+            break;
+        }
+        case KEY_R:{
+            camera.moveUp = true;
+            break;
+        }
+        case KEY_F:{
+            camera.moveDown = true;
+            break;
+        }
+        case KEY_UP:{
+            camera.pitchUp = true;
+            break;
+        }
+        case KEY_DOWN:{
+            camera.pitchDown = true;
+            break;
+        }
+        case KEY_LEFT:{
+            camera.yawLeft = true;
+            break;
+        }
+        case KEY_RIGHT:{
+            camera.yawRight = true;
+            break;
+        }
+        case KEY_Q:{
+            camera.rollLeft = true;
+            break;
+        }
+        case KEY_E:{
+            camera.rollRight = true;
+            break;
+        }
+    }
 }
