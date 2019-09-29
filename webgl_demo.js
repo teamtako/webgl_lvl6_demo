@@ -7,11 +7,19 @@ var vertexArray;
 var vertexBuffer;
 var iindexBuffer;
 var positionAttribID;
-var uvCoordID
+var normalID;
+var uvCoordID;
 var checkTexture;
 
 var projectionViewMatrixID;
 var modelMatrixID;
+
+var lightColorID;
+var lightPositionID;
+var cameraPositionID;
+
+var lightColor;
+var lightPosition;
 
 var indices;
 
@@ -72,6 +80,7 @@ window.onload = function(){
 
     gl.clearColor(0.5, 0.7, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
 
     let vertShader = document.getElementById("basicVertexID").text;
     let fragShader = document.getElementById("basicFragmentID").text;
@@ -80,14 +89,44 @@ window.onload = function(){
     gl.useProgram(shaderProgram);
 
     let vertices = [
-        -0.5, -0.5, 0.0,    0.0, 1.0,
-        -0.5, 0.5, 0.0,     0.0, 0.0,
-         0.5, 0.5, 0.0,     1.0, 0.0,
-         0.5, -0.5, 0.0,    1.0, 1.0
+        -0.5, -0.5, 0.5,  0, 0, 1,     0.0, 1.0,
+        -0.5,  0.5, 0.5,  0, 0, 1,     0.0, 0.0,
+         0.5,  0.5, 0.5,  0, 0, 1,     1.0, 0.0,
+         0.5, -0.5, 0.5,  0, 0, 1,     1.0, 1.0,
+
+         0.5, -0.5, -0.5,  0, 0, -1,     0.0, 1.0,
+         0.5,  0.5, -0.5,  0, 0, -1,     0.0, 0.0,
+        -0.5,  0.5, -0.5,  0, 0, -1,     1.0, 0.0,
+        -0.5, -0.5, -0.5,  0, 0, -1,     1.0, 1.0,
+
+         0.5, -0.5,  0.5,  1, 0, 0,     0.0, 1.0,
+         0.5,  0.5,  0.5,  1, 0, 0,     0.0, 0.0,
+         0.5,  0.5, -0.5,  1, 0, 0,     1.0, 0.0,
+         0.5, -0.5, -0.5,  1, 0, 0,     1.0, 1.0,
+
+        -0.5, -0.5, -0.5,  -1, 0, 0,     0.0, 1.0,
+        -0.5,  0.5, -0.5,  -1, 0, 0,     0.0, 0.0,
+        -0.5,  0.5,  0.5,  -1, 0, 0,     1.0, 0.0,
+        -0.5, -0.5,  0.5,  -1, 0, 0,     1.0, 1.0,
+
+        -0.5,  0.5,  0.5,  0, 1, 0,     0.0, 1.0,
+        -0.5,  0.5, -0.5,  0, 1, 0,     0.0, 0.0,
+         0.5,  0.5, -0.5,  0, 1, 0,     1.0, 0.0,
+         0.5,  0.5,  0.5,  0, 1, 0,     1.0, 1.0,
+
+        -0.5, -0.5, -0.5,  0, -1, 0,     0.0, 1.0,
+        -0.5, -0.5,  0.5,  0, -1, 0,     0.0, 0.0,
+         0.5, -0.5,  0.5,  0, -1, 0,     1.0, 0.0,
+         0.5, -0.5, -0.5,  0, -1, 0,     1.0, 1.0,
     ];
 
     indices = [
-        0, 1, 2, 2, 3, 0
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4,
+        8, 9, 10, 10, 11, 8,
+        12, 13, 14, 14, 15, 12,
+        16, 17, 18, 18, 19, 16,
+        20, 21, 22, 22, 23, 20
     ];
 
     let texPixels = [
@@ -102,6 +141,7 @@ window.onload = function(){
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.generateMipmap(gl.TEXTURE_2D);
     
     vertexArray = gl.createVertexArray();
     gl.bindVertexArray(vertexArray);
@@ -113,23 +153,33 @@ window.onload = function(){
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW);
 
     positionAttribID = gl.getAttribLocation(shaderProgram, "position");
+    normalID = gl.getAttribLocation(shaderProgram, "normal");
     uvCoordID = gl.getAttribLocation(shaderProgram, "uvCoordinate");
 
     projectionViewMatrixID = gl.getUniformLocation(shaderProgram, "projectionViewMatrix");
     modelMatrixID = gl.getUniformLocation(shaderProgram, "modelMatrix");
 
+    lightColorID = gl.getUniformLocation(shaderProgram, "lightColor");
+    lightPositionID = gl.getUniformLocation(shaderProgram, "lightPosition");
+    cameraPositionID = gl.getUniformLocation(shaderProgram, "cameraPosition");
+
     camera = new Camera();
     camera.setPerspectiveProjection(70.0, canvas.width / canvas.height, 0.001, 1000.0);
     camera.position.z += 5;
     camera.updateView(0);
+
+    lightColor = new Vector3(1, 1, 1);
+    lightPosition = new Vector3(2, 2, 2);
     
     gl.uniformMatrix4fv(projectionViewMatrixID, gl.FALSE, camera.viewMatrix.m);    
     gl.uniformMatrix4fv(modelMatrixID, gl.FALSE, new Matrix4().m);
 
     gl.enableVertexAttribArray(positionAttribID);
+    gl.enableVertexAttribArray(normalID);
     gl.enableVertexAttribArray(uvCoordID);
-    gl.vertexAttribPointer(positionAttribID, 3, gl.FLOAT, gl.FALSE, 20, 0);
-    gl.vertexAttribPointer(uvCoordID, 2, gl.FLOAT, gl.FALSE, 20, 12);
+    gl.vertexAttribPointer(positionAttribID, 3, gl.FLOAT, gl.FALSE, 32, 0);
+    gl.vertexAttribPointer(normalID, 3, gl.FLOAT, gl.FALSE, 32, 12);
+    gl.vertexAttribPointer(uvCoordID, 2, gl.FLOAT, gl.FALSE, 32, 24);
 
     gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0);
 
@@ -138,9 +188,14 @@ window.onload = function(){
 
 function updateFrame(){
     gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.DEPTH_BUFFER_BIT);
 
     camera.updateView(0.01);
     
+    gl.uniform3fv(cameraPositionID, camera.position.toArray());
+    gl.uniform3fv(lightPositionID, lightPosition.toArray());
+    gl.uniform3fv(lightColorID, lightColor.toArray());
+
     gl.uniformMatrix4fv(projectionViewMatrixID, gl.FALSE, camera.viewMatrix.m);    
     gl.uniformMatrix4fv(modelMatrixID, gl.FALSE, new Matrix4().m);
 

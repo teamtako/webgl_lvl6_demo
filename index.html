@@ -5,13 +5,18 @@
     <script src='webgl_demo.js'></script>
     <script id='basicVertexID' type='type/glsl'>#version 300 es
     in vec3 position;
+    in vec3 normal;
     in vec2 uvCoordinate;
     out vec2 uvCoord;
+    out vec3 fragPosition;
+    out vec3 fragNormal;
 
     uniform mat4 projectionViewMatrix;
     uniform mat4 modelMatrix;
 
     void main(){
+        fragPosition = vec3(modelMatrix * vec4(position, 1));
+        fragNormal = vec3(modelMatrix * vec4(normal, 0));
         gl_Position = projectionViewMatrix * modelMatrix * vec4(position, 1.0);
         uvCoord = uvCoordinate;
     }
@@ -21,9 +26,28 @@
     precision mediump float;
     out vec4 pixelColor;
     in vec2 uvCoord;
+    in vec3 fragPosition; 
+    in vec3 fragNormal;
+
+    uniform vec3 lightPosition;
+    uniform vec3 lightColor;
+    uniform vec3 cameraPosition;
     uniform sampler2D texPixels;
+
     void main(){
-        pixelColor = texture(texPixels, uvCoord);
+        vec3 ambient = 0.2 * lightColor;
+
+        vec3 lightDir = normalize(lightPosition - fragPosition);
+        float diff = max(dot(fragNormal, lightDir), 0.0);
+        vec3 diffuse = vec3(diff) * lightColor;
+
+        vec3 viewDir = normalize(cameraPosition - fragPosition);
+        vec3 reflectDir = reflect(-lightDir, fragNormal);  
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+        vec3 specular = 0.5 * spec * lightColor;  
+
+        vec4 texColor = texture(texPixels, uvCoord);
+        pixelColor = vec4((ambient + diffuse + specular), 1.0) * texColor;
     }
     </script>
 </html>
