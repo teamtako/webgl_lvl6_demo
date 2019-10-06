@@ -10,6 +10,7 @@ var positionAttribID;
 var normalID;
 var uvCoordID;
 var checkTexture;
+var monkeyTexture;
 
 var projectionViewMatrixID;
 var modelMatrixID;
@@ -67,6 +68,13 @@ const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
 const KEY_SPACE = 32;
 
+class TexturedMesh {
+    constructor(){
+        this.indexCount;
+        this.indexOffset;
+    }
+}
+
 window.onload = function(){
     window.addEventListener("keyup", keyUp);
     window.addEventListener("keydown", keyDown);
@@ -88,51 +96,14 @@ window.onload = function(){
     shaderProgram = compileGLShader(gl, vertShader, fragShader);
     gl.useProgram(shaderProgram);
 
-    let vertices = [
-        -0.5, -0.5, 0.5,  0, 0, 1,     0.0, 1.0,
-        -0.5,  0.5, 0.5,  0, 0, 1,     0.0, 0.0,
-         0.5,  0.5, 0.5,  0, 0, 1,     1.0, 0.0,
-         0.5, -0.5, 0.5,  0, 0, 1,     1.0, 1.0,
-
-         0.5, -0.5, -0.5,  0, 0, -1,     0.0, 1.0,
-         0.5,  0.5, -0.5,  0, 0, -1,     0.0, 0.0,
-        -0.5,  0.5, -0.5,  0, 0, -1,     1.0, 0.0,
-        -0.5, -0.5, -0.5,  0, 0, -1,     1.0, 1.0,
-
-         0.5, -0.5,  0.5,  1, 0, 0,     0.0, 1.0,
-         0.5,  0.5,  0.5,  1, 0, 0,     0.0, 0.0,
-         0.5,  0.5, -0.5,  1, 0, 0,     1.0, 0.0,
-         0.5, -0.5, -0.5,  1, 0, 0,     1.0, 1.0,
-
-        -0.5, -0.5, -0.5,  -1, 0, 0,     0.0, 1.0,
-        -0.5,  0.5, -0.5,  -1, 0, 0,     0.0, 0.0,
-        -0.5,  0.5,  0.5,  -1, 0, 0,     1.0, 0.0,
-        -0.5, -0.5,  0.5,  -1, 0, 0,     1.0, 1.0,
-
-        -0.5,  0.5,  0.5,  0, 1, 0,     0.0, 1.0,
-        -0.5,  0.5, -0.5,  0, 1, 0,     0.0, 0.0,
-         0.5,  0.5, -0.5,  0, 1, 0,     1.0, 0.0,
-         0.5,  0.5,  0.5,  0, 1, 0,     1.0, 1.0,
-
-        -0.5, -0.5, -0.5,  0, -1, 0,     0.0, 1.0,
-        -0.5, -0.5,  0.5,  0, -1, 0,     0.0, 0.0,
-         0.5, -0.5,  0.5,  0, -1, 0,     1.0, 0.0,
-         0.5, -0.5, -0.5,  0, -1, 0,     1.0, 1.0,
-    ];
-
-    indices = [
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4,
-        8, 9, 10, 10, 11, 8,
-        12, 13, 14, 14, 15, 12,
-        16, 17, 18, 18, 19, 16,
-        20, 21, 22, 22, 23, 20
-    ];
-
     let texPixels = [
         0, 0, 0, 255,   255, 255, 255, 255,
         255, 255, 255, 255,     0, 0, 0, 255
     ]
+    verts = [];
+    inds = [];
+    generateUnitCubeVerticesIndexedWithNormalsTexCoords(verts, inds);
+
 
     checkTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, checkTexture);
@@ -142,15 +113,24 @@ window.onload = function(){
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.generateMipmap(gl.TEXTURE_2D);
+
+    monkeyTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, monkeyTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(monkeyPixels));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.generateMipmap(gl.TEXTURE_2D);
     
     vertexArray = gl.createVertexArray();
     gl.bindVertexArray(vertexArray);
     vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(monkeyData[0]), gl.STATIC_DRAW);
     indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(monkeyData[1]), gl.STATIC_DRAW);
 
     positionAttribID = gl.getAttribLocation(shaderProgram, "position");
     normalID = gl.getAttribLocation(shaderProgram, "normal");
@@ -181,7 +161,7 @@ window.onload = function(){
     gl.vertexAttribPointer(normalID, 3, gl.FLOAT, gl.FALSE, 32, 12);
     gl.vertexAttribPointer(uvCoordID, 2, gl.FLOAT, gl.FALSE, 32, 24);
 
-    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0);
+    gl.drawElements(gl.TRIANGLES, monkeyData[1].length, gl.UNSIGNED_INT, 0);
 
     setInterval(updateFrame, 1);
 }
@@ -199,7 +179,7 @@ function updateFrame(){
     gl.uniformMatrix4fv(projectionViewMatrixID, gl.FALSE, camera.viewMatrix.m);    
     gl.uniformMatrix4fv(modelMatrixID, gl.FALSE, new Matrix4().m);
 
-    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0);
+    gl.drawElements(gl.TRIANGLES, monkeyData[1].length, gl.UNSIGNED_INT, 0);
 }
 
 function keyUp(event){ 
