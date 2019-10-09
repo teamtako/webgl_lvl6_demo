@@ -1,30 +1,21 @@
 var canvas;
 var gl;
 
-var shaderProgram;
-
-var vertexArray;
-var vertexBuffer;
-var iindexBuffer;
-var positionAttribID;
-var normalID;
-var uvCoordID;
-var checkTexture;
-var monkeyTexture;
-
-var projectionViewMatrixID;
-var modelMatrixID;
-
-var lightColorID;
-var lightPositionID;
-var cameraPositionID;
-
-var lightColor;
-var lightPosition;
-
-var indices;
-
+var light;
 var camera;
+
+var monkeyMesh;
+var cubeMesh;
+var meshes = [];
+
+var verticalVelocity = 0;
+var gravity = 1;
+var jumping = false;
+var cubeSpeed = 10;
+
+var startTime = 0;
+var endTime = 0;
+var deltaTime = 0;
 
 const KEY_0 = 48;
 const KEY_1 = 49;
@@ -68,13 +59,6 @@ const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
 const KEY_SPACE = 32;
 
-class TexturedMesh {
-    constructor(){
-        this.indexCount;
-        this.indexOffset;
-    }
-}
-
 window.onload = function(){
     window.addEventListener("keyup", keyUp);
     window.addEventListener("keydown", keyDown);
@@ -82,154 +66,81 @@ window.onload = function(){
     canvas = document.getElementById("canvasID");
     gl = canvas.getContext("webgl2");
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth * 0.95;
+    canvas.height = window.innerHeight * 0.95;
     gl.viewport(0, 0, canvas.width, canvas.height);
-
+    gl.enable(gl.CULL_FACE);
     gl.clearColor(0.5, 0.7, 1.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
-
-    let vertShader = document.getElementById("basicVertexID").text;
-    let fragShader = document.getElementById("basicFragmentID").text;
-
-    shaderProgram = compileGLShader(gl, vertShader, fragShader);
-    gl.useProgram(shaderProgram);
-
-    let texPixels = [
-        0, 0, 0, 255,   255, 255, 255, 255,
-        255, 255, 255, 255,     0, 0, 0, 255
-    ]
-    verts = [];
-    inds = [];
-    generateUnitCubeVerticesIndexedWithNormalsTexCoords(verts, inds);
-
-
-    checkTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, checkTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(texPixels));
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.generateMipmap(gl.TEXTURE_2D);
-
-    monkeyTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, monkeyTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(monkeyPixels));
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    
-    vertexArray = gl.createVertexArray();
-    gl.bindVertexArray(vertexArray);
-    vertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(monkeyData[0]), gl.STATIC_DRAW);
-    indexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(monkeyData[1]), gl.STATIC_DRAW);
-
-    positionAttribID = gl.getAttribLocation(shaderProgram, "position");
-    normalID = gl.getAttribLocation(shaderProgram, "normal");
-    uvCoordID = gl.getAttribLocation(shaderProgram, "uvCoordinate");
-
-    projectionViewMatrixID = gl.getUniformLocation(shaderProgram, "projectionViewMatrix");
-    modelMatrixID = gl.getUniformLocation(shaderProgram, "modelMatrix");
-
-    lightColorID = gl.getUniformLocation(shaderProgram, "lightColor");
-    lightPositionID = gl.getUniformLocation(shaderProgram, "lightPosition");
-    cameraPositionID = gl.getUniformLocation(shaderProgram, "cameraPosition");
 
     camera = new Camera();
     camera.setPerspectiveProjection(70.0, canvas.width / canvas.height, 0.001, 1000.0);
-    camera.position.z += 5;
+    camera.position = new Vector3(5, 5, 10);
+    camera.orientation = new Quaternion(0.2, 0, 0, 1);
     camera.updateView(0);
 
-    lightColor = new Vector3(1, 1, 1);
-    lightPosition = new Vector3(2, 2, 2);
-    
-    gl.uniformMatrix4fv(projectionViewMatrixID, gl.FALSE, camera.viewMatrix.m);    
-    gl.uniformMatrix4fv(modelMatrixID, gl.FALSE, new Matrix4().m);
+    initTexturedMeshRenderer();
 
-    gl.enableVertexAttribArray(positionAttribID);
-    gl.enableVertexAttribArray(normalID);
-    gl.enableVertexAttribArray(uvCoordID);
-    gl.vertexAttribPointer(positionAttribID, 3, gl.FLOAT, gl.FALSE, 32, 0);
-    gl.vertexAttribPointer(normalID, 3, gl.FLOAT, gl.FALSE, 32, 12);
-    gl.vertexAttribPointer(uvCoordID, 2, gl.FLOAT, gl.FALSE, 32, 24);
+    monkeyMesh = createTexturedMesh(monkeyData[0], monkeyData[1]);
+    monkeyMesh.textureID = generateGLTexture2D(monkeyPixels, 1024, 1024);
+    monkeyMesh.orientation.rotate(new Vector3(0, 1, 0), -Math.PI);
 
-    gl.drawElements(gl.TRIANGLES, monkeyData[1].length, gl.UNSIGNED_INT, 0);
+    let verts = [];
+    let inds = [];
+    generateUnitCubeVerticesIndexedWithNormalsTexCoords(verts, inds);
+    this.cubeMesh = createTexturedMesh(verts, inds);
+    cubeMesh.position
+    cubeMesh.position = new Vector3(20, 0, 0);
+    meshes = [monkeyMesh, cubeMesh];
 
+    startTime = new Date().getTime();
     setInterval(updateFrame, 1);
 }
 
+function checkIntersection(m1, m2){
+    dist = Vector3.sub(m1.position, m2.position);
+    if(Vector3.length(dist) < 1){
+        gl.clearColor(1, 0, 0, 1);
+    }else{
+        gl.clearColor(0.5, 0.7, 1.0, 1.0);
+    }
+}
+
 function updateFrame(){
+    checkIntersection(monkeyMesh, cubeMesh);
+
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.clear(gl.DEPTH_BUFFER_BIT);
 
-    camera.updateView(0.01);
-    
-    gl.uniform3fv(cameraPositionID, camera.position.toArray());
-    gl.uniform3fv(lightPositionID, lightPosition.toArray());
-    gl.uniform3fv(lightColorID, lightColor.toArray());
+    verticalVelocity -= gravity * deltaTime;
+    monkeyMesh.position.y += verticalVelocity;
+    if(monkeyMesh.position.y < 0){
+        monkeyMesh.position.y = 0;
+        jumping = false;
+    }
 
-    gl.uniformMatrix4fv(projectionViewMatrixID, gl.FALSE, camera.viewMatrix.m);    
-    gl.uniformMatrix4fv(modelMatrixID, gl.FALSE, new Matrix4().m);
+    cubeMesh.position.x -= cubeSpeed * deltaTime;
+    if(cubeMesh.position.x <= -7){
+        cubeMesh.position.x = 20;
+    }
 
-    gl.drawElements(gl.TRIANGLES, monkeyData[1].length, gl.UNSIGNED_INT, 0);
+    camera.updateView(deltaTime);
+    renderTexturedMeshes(meshes, camera, new Vector3(4, 4, 4));
+
+    endTime = new Date().getTime();
+    deltaTime = (endTime - startTime) / 1000.0;
+    startTime = endTime;
 }
 
 function keyUp(event){ 
+    console.log(camera.position);
+    console.log(camera.orientation);
     switch(event.keyCode){
-        case KEY_W:{
-            camera.moveForward = false;
-            break;
-        }
-        case KEY_A:{
-            camera.moveLeft = false;
-            break;
-        }
-        case KEY_S:{
-            camera.moveBack = false;
-            break;
-        }
-        case KEY_D:{
-            camera.moveRight = false;
-            break;
-        }
-        case KEY_R:{
-            camera.moveUp = false;
-            break;
-        }
-        case KEY_F:{
-            camera.moveDown = false;
-            break;
-        }
-        case KEY_UP:{
-            camera.pitchUp = false;
-            break;
-        }
-        case KEY_DOWN:{
-            camera.pitchDown = false;
-            break;
-        }
-        case KEY_LEFT:{
-            camera.yawLeft = false;
-            break;
-        }
-        case KEY_RIGHT:{
-            camera.yawRight = false;
-            break;
-        }
-        case KEY_Q:{
-            camera.rollLeft = false;
-            break;
-        }
-        case KEY_E:{
-            camera.rollRight = false;
+        case KEY_SPACE:{
+            if(!jumping){
+                verticalVelocity = 0.2;
+                jumping = true;
+            }
             break;
         }
     }
@@ -238,53 +149,6 @@ function keyUp(event){
 var an = true;
 function keyDown(event){
     switch(event.keyCode){
-        case KEY_W:{
-            camera.moveForward = true;
-            break;
-        }
-        case KEY_A:{
-            camera.moveLeft = true;
-            break;
-        }
-        case KEY_S:{
-            camera.moveBack = true;
-            break;
-        }
-        case KEY_D:{
-            camera.moveRight = true;
-            break;
-        }
-        case KEY_R:{
-            camera.moveUp = true;
-            break;
-        }
-        case KEY_F:{
-            camera.moveDown = true;
-            break;
-        }
-        case KEY_UP:{
-            camera.pitchUp = true;
-            break;
-        }
-        case KEY_DOWN:{
-            camera.pitchDown = true;
-            break;
-        }
-        case KEY_LEFT:{
-            camera.yawLeft = true;
-            break;
-        }
-        case KEY_RIGHT:{
-            camera.yawRight = true;
-            break;
-        }
-        case KEY_Q:{
-            camera.rollLeft = true;
-            break;
-        }
-        case KEY_E:{
-            camera.rollRight = true;
-            break;
-        }
+        
     }
 }
