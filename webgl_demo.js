@@ -7,7 +7,7 @@ var camera;
 var monkeyMesh;
 var cubeMesh;
 var meshes = [];
-
+var myvar;
 var verticalVelocity = 0;
 var gravity = 1;
 var jumping = false;
@@ -60,6 +60,7 @@ const KEY_RIGHT = 39;
 const KEY_SPACE = 32;
 
 window.onload = function(){
+
     window.addEventListener("keyup", keyUp);
     window.addEventListener("keydown", keyDown);
 
@@ -94,15 +95,23 @@ window.onload = function(){
     meshes = [monkeyMesh, cubeMesh];
 
     startTime = new Date().getTime();
-    setInterval(updateFrame, 1);
+  myvar = setInterval(updateFrame, 1);
 }
 
 function checkIntersection(m1, m2){
     dist = Vector3.sub(m1.position, m2.position);
     if(Vector3.length(dist) < 1){
         gl.clearColor(1, 0, 0, 1);
+        console.log("hello");
+        clearInterval(myvar);
+       console.log("Ded");
+       var t = document.createTextNode("You are dead, press the up arrow to restart");
+       document.body.appendChild(t);
+       document.addEventListener('keyup', (e) => {
+        if (e.code === "ArrowUp")     t.remove(); gl.clearColor(0.7, 0.5, 1.0, 1.0);  cubeMesh.position = new Vector3(20, 0, 0);   myvar = setInterval(updateFrame, 1);
+      });
     }else{
-        gl.clearColor(0.5, 0.7, 1.0, 1.0);
+        gl.clearColor(0.7, 0.5, 1.0, 1.0);
     }
 }
 
