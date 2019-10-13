@@ -70,7 +70,7 @@ window.onload = function(){
     canvas.height = window.innerHeight * 0.95;
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.enable(gl.CULL_FACE);
-    gl.clearColor(0.5, 0.7, 1.0, 1.0);
+    gl.clearColor(0, 0, 0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
     camera = new Camera();
@@ -81,10 +81,10 @@ window.onload = function(){
 
     initTexturedMeshRenderer();
 
-    monkeyMesh = createTexturedMesh(monkeyData[0], monkeyData[1]);
-    monkeyMesh.textureID = generateGLTexture2D(monkeyPixels, 1024, 1024);
+    monkeyMesh = createTexturedMesh(missileData[0], missileData[1]);
+//    monkeyMesh.textureID = generateGLTexture2D(monkeyPixels, 1024, 1024);
     monkeyMesh.orientation.rotate(new Vector3(0, 1, 0), -Math.PI);
-
+    
     let verts = [];
     let inds = [];
     generateUnitCubeVerticesIndexedWithNormalsTexCoords(verts, inds);
@@ -102,7 +102,7 @@ function checkIntersection(m1, m2){
     if(Vector3.length(dist) < 1){
         gl.clearColor(1, 0, 0, 1);
     }else{
-        gl.clearColor(0.5, 0.7, 1.0, 1.0);
+        gl.clearColor(0, 0, 0, 1.0);
     }
 }
 
