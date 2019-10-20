@@ -4,6 +4,7 @@ var gl;
 var light;
 var camera;
 
+var t;
 var monkeyMesh;
 var cubeMesh;
 var meshes = [];
@@ -13,6 +14,7 @@ var gravity = 1;
 var jumping = false;
 var cubeSpeed = 10;
 
+var isDead  = false;
 var startTime = 0;
 var endTime = 0;
 var deltaTime = 0;
@@ -60,7 +62,7 @@ const KEY_RIGHT = 39;
 const KEY_SPACE = 32;
 
 window.onload = function(){
-
+  
     window.addEventListener("keyup", keyUp);
     window.addEventListener("keydown", keyDown);
 
@@ -96,26 +98,27 @@ window.onload = function(){
 
     startTime = new Date().getTime();
   myvar = setInterval(updateFrame, 1);
+  
 }
 
 function checkIntersection(m1, m2){
     dist = Vector3.sub(m1.position, m2.position);
     if(Vector3.length(dist) < 1){
         gl.clearColor(1, 0, 0, 1);
-        console.log("hello");
-        clearInterval(myvar);
-       console.log("Ded");
-       var t = document.createTextNode("You are dead, press the up arrow to restart");
+       clearInterval(myvar);
+      t = document.createTextNode("You are dead, press the up arrow to restart");
+            isDead = true;
        document.body.appendChild(t);
-       document.addEventListener('keyup', (e) => {
-        if (e.code === "ArrowUp")     t.remove(); gl.clearColor(0.7, 0.5, 1.0, 1.0);  cubeMesh.position = new Vector3(20, 0, 0);   myvar = setInterval(updateFrame, 1);
-      });
-    }else{
-        gl.clearColor(0.7, 0.5, 1.0, 1.0);
+        
+    } else {
+       if(isDead == false) { console.log("working");}
+        isDead = false;
     }
+       
 }
 
 function updateFrame(){
+    isDead = false;
     checkIntersection(monkeyMesh, cubeMesh);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -157,7 +160,20 @@ function keyUp(event){
 
 var an = true;
 function keyDown(event){
+  
     switch(event.keyCode){
+        case KEY_UP:{
         
+        if(isDead == true) {
+        t.remove(); 
+        gl.clearColor(0.7, 0.5, 1.0, 1.0);  
+        cubeMesh.position = new Vector3(20, 0, 0);     
+        startTime = new Date().getTime();  
+        myvar = setInterval(updateFrame, 1);}
+        isDead = false;
+        console.log("respawned")
+       }
+     
     }
-}
+} 
+
