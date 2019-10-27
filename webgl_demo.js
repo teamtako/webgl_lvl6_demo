@@ -166,7 +166,7 @@ function keyDown(event){
         
         if(isDead == true) {
         t.remove(); 
-        gl.clearColor(0.7, 0.5, 1.0, 1.0);  
+        gl.clearColor(0.5, 0.7, 1.0, 1.0);  
         cubeMesh.position = new Vector3(20, 0, 0);     
         startTime = new Date().getTime();  
         myvar = setInterval(updateFrame, 1);}
