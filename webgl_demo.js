@@ -1,4 +1,6 @@
 var canvas;
+var textCanvas;
+var textCtx;
 var gl;
 
 var light;
@@ -65,7 +67,14 @@ window.onload = function(){
 
     canvas = document.getElementById("canvasID");
     gl = canvas.getContext("webgl2");
+    textCanvas = document.getElementById("textCanvasID");
+    textCtx = textCanvas.getContext("2d");
 
+    textCanvas.style.position = "absolute";
+    textCanvas.style.left = "0px";
+    textCanvas.style.top = "0px";
+    textCanvas.width = window.innerWidth * 0.95;
+    textCanvas.height = window.innerHeight * 0.95;
     canvas.width = window.innerWidth * 0.95;
     canvas.height = window.innerHeight * 0.95;
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -126,15 +135,22 @@ function updateFrame(){
 
     camera.updateView(deltaTime);
     renderTexturedMeshes(meshes, camera, new Vector3(4, 4, 4));
+    textCtx.font = "30px Arial";
+    textCtx.fillText("This is an example of text.", 100, 100);
 
     endTime = new Date().getTime();
     deltaTime = (endTime - startTime) / 1000.0;
     startTime = endTime;
 }
 
-function keyUp(event){ 
-    console.log(camera.position);
-    console.log(camera.orientation);
+function keyUp(event){
+    switch(event.keyCode){
+        
+    }
+}
+
+var an = true;
+function keyDown(event){
     switch(event.keyCode){
         case KEY_SPACE:{
             if(!jumping){
@@ -143,12 +159,5 @@ function keyUp(event){
             }
             break;
         }
-    }
-}
-
-var an = true;
-function keyDown(event){
-    switch(event.keyCode){
-        
     }
 }
