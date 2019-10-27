@@ -6,15 +6,17 @@ var gl;
 var light;
 var camera;
 
+var t;
 var monkeyMesh;
 var cubeMesh;
 var meshes = [];
-
+var myvar;
 var verticalVelocity = 0;
 var gravity = 1;
 var jumping = false;
 var cubeSpeed = 10;
 
+var isDead  = false;
 var startTime = 0;
 var endTime = 0;
 var deltaTime = 0;
@@ -62,6 +64,7 @@ const KEY_RIGHT = 39;
 const KEY_SPACE = 32;
 
 window.onload = function(){
+  
     window.addEventListener("keyup", keyUp);
     window.addEventListener("keydown", keyDown);
 
@@ -103,19 +106,28 @@ window.onload = function(){
     meshes = [monkeyMesh, cubeMesh];
 
     startTime = new Date().getTime();
-    setInterval(updateFrame, 1);
+  myvar = setInterval(updateFrame, 1);
+  
 }
 
 function checkIntersection(m1, m2){
     dist = Vector3.sub(m1.position, m2.position);
     if(Vector3.length(dist) < 1){
         gl.clearColor(1, 0, 0, 1);
-    }else{
-        gl.clearColor(0.5, 0.7, 1.0, 1.0);
+       clearInterval(myvar);
+      t = document.createTextNode("You are dead, press the up arrow to restart");
+            isDead = true;
+       document.body.appendChild(t);
+        
+    } else {
+       if(isDead == false) { console.log("working");}
+        isDead = false;
     }
+       
 }
 
 function updateFrame(){
+    isDead = false;
     checkIntersection(monkeyMesh, cubeMesh);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -161,3 +173,23 @@ function keyDown(event){
         }
     }
 }
+
+var an = true;
+function keyDown(event){
+  
+    switch(event.keyCode){
+        case KEY_UP:{
+        
+        if(isDead == true) {
+        t.remove(); 
+        gl.clearColor(0.5, 0.7, 1.0, 1.0);  
+        cubeMesh.position = new Vector3(20, 0, 0);     
+        startTime = new Date().getTime();  
+        myvar = setInterval(updateFrame, 1);}
+        isDead = false;
+        console.log("respawned")
+       }
+     
+    }
+} 
+
