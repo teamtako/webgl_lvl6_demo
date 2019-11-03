@@ -113,9 +113,9 @@ window.onload = function(){
     let verts = [];
     let inds = [];
     generateUnitCubeVerticesIndexedWithNormalsTexCoords(verts, inds);
-    this.cubeMesh = createTexturedMesh(verts, inds);
-    cubeMesh.position
-    cubeMesh.position = new Vector3(0, 0, 0);
+    //this.cubeMesh = createTexturedMesh(verts, inds);
+    cubeMesh = createTexturedMesh(missileData[0], missileData[1]);
+    cubeMesh.orientation.rotate(new Vector3(0, 1, 0), -Math.PI);
     meshes = [monkeyMesh, cubeMesh];
 
     startTime = new Date().getTime();
