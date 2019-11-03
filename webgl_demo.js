@@ -10,6 +10,8 @@ var monkeyMesh;
 var cubeMesh;
 var meshes = [];
 
+var rein = 0;
+var stopvar;
 var verticalVelocity = 0;
 var gravity = 1;
 var jumping = false;
@@ -90,6 +92,45 @@ window.onload = function(){
     gl.clearColor(0.5, 0.7, 1.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
+    let vertices = [
+        -0.5, -0.5, 0.5,  0, 0, 1,     0.0, 1.0,
+        -0.5,  0.5, 0.5,  0, 0, 1,     0.0, 0.0,
+         0.5,  0.5, 0.5,  0, 0, 1,     1.0, 0.0,
+         0.5, -0.5, 0.5,  0, 0, 1,     1.0, 1.0,
+
+         0.5, -0.5, -0.5,  0, 0, -1,     0.0, 1.0,
+         0.5,  0.5, -0.5,  0, 0, -1,     0.0, 0.0,
+        -0.5,  0.5, -0.5,  0, 0, -1,     1.0, 0.0,
+        -0.5, -0.5, -0.5,  0, 0, -1,     1.0, 1.0,
+
+         0.5, -0.5,  0.5,  1, 0, 0,     0.0, 1.0,
+         0.5,  0.5,  0.5,  1, 0, 0,     0.0, 0.0,
+         0.5,  0.5, -0.5,  1, 0, 0,     1.0, 0.0,
+         0.5, -0.5, -0.5,  1, 0, 0,     1.0, 1.0,
+
+        -0.5, -0.5, -0.5,  -1, 0, 0,     0.0, 1.0,
+        -0.5,  0.5, -0.5,  -1, 0, 0,     0.0, 0.0,
+        -0.5,  0.5,  0.5,  -1, 0, 0,     1.0, 0.0,
+        -0.5, -0.5,  0.5,  -1, 0, 0,     1.0, 1.0,
+
+        -0.5,  0.5,  0.5,  0, 1, 0,     0.0, 1.0,
+        -0.5,  0.5, -0.5,  0, 1, 0,     0.0, 0.0,
+         0.5,  0.5, -0.5,  0, 1, 0,     1.0, 0.0,
+         0.5,  0.5,  0.5,  0, 1, 0,     1.0, 1.0,
+
+        -0.5, -0.5, -0.5,  0, -1, 0,     0.0, 1.0,
+        -0.5, -0.5,  0.5,  0, -1, 0,     0.0, 0.0,
+         0.5, -0.5,  0.5,  0, -1, 0,     1.0, 0.0,
+         0.5, -0.5, -0.5,  0, -1, 0,     1.0, 1.0,
+    ];
+    indices = [
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4,
+        8, 9, 10, 10, 11, 8,
+        12, 13, 14, 14, 15, 12,
+        16, 17, 18, 18, 19, 16,
+        20, 21, 22, 22, 23, 20
+    ];
     camera = new Camera();
     camera.setPerspectiveProjection(70.0, canvas.width / canvas.height, 0.001, 1000.0);
     camera.position = new Vector3(-5, 2, 0);
@@ -106,10 +147,10 @@ window.onload = function(){
     loadSkyboxFaceImage(skyboxImageData[4], 256, 256, "+y");
     loadSkyboxFaceImage(skyboxImageData[5], 256, 256, "-y");
 
-    monkeyMesh = createTexturedMesh(monkeyData[0], monkeyData[1]);
+    monkeyMesh = createTexturedMesh(vertices, indices);
     //monkeyMesh.textureID = generateGLTexture2D(monkeyPixels, 1024, 1024);
     monkeyMesh.orientation.rotate(new Vector3(0, 1, 0), -Math.PI);
-
+    monkeyMesh.position.y = 2;
     let verts = [];
     let inds = [];
     generateUnitCubeVerticesIndexedWithNormalsTexCoords(verts, inds);
@@ -119,16 +160,20 @@ window.onload = function(){
     meshes = [monkeyMesh, cubeMesh];
 
     startTime = new Date().getTime();
-    setInterval(updateFrame, 1 );
+   stopvar =  setInterval(updateFrame, 1 );
 }
 
 function checkIntersection(m1, m2){
     dist = Vector3.sub(m1.position, m2.position);
-    if(Vector3.length(dist) < 4){
+    if(Vector3.length(dist) < 1){
         m1.verts
         gl.clearColor(1, 0, 0, 1);
+        isDead = true;
+        console.log("should Be dead");
+
     }else{
         gl.clearColor(0.5, 0.7, 1.0, 1.0);
+        isDead = false;
     }
 }
 
@@ -154,15 +199,17 @@ function updateFrame(){
         monkeyMesh.position.x -= .1;
     }
     monkeyMesh.orientation.rotate(new Vector3(0,0,1), 1 * deltaTime);
-    
+    rein++;
     
     camera.updateView(deltaTime);
     renderTexturedMeshes(meshes, camera, new Vector3(4, 4, 4));
     renderSkybox(camera.projectionMatrix, camera.orientation);
     textCtx.font = "30px Arial";
     textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
-    if(isDead){
+    if(isDead && rein > 20){
         textCtx.fillText("You're Dead!", 100, 100);
+        clearInterval(stopvar);
+        console.log("dying");
     }else{
         textCtx.fillText("Score: " + score, 100, 100);
     }
@@ -176,16 +223,25 @@ function updateFrame(){
 function keyUp(event){ 
     console.log(camera.position);
     console.log(camera.orientation);
+    
     switch(event.keyCode){
-        case KEY_SPACE:{
-            if(!jumping){
-                verticalVelocity = 0.2;
-                jumping = true;
-            }
-            break;
-        }
+        case KEY_S:{
+        console.log("press works");
+        if(isDead == true) {
+        gl.clearColor(0.5, 0.7, 1.0, 1.0);  
+        cubeMesh.position.z = ((mouseX / canvas.width) * 2) + -1;
+    cubeMesh.position.y = ((mouseY / canvas.height) * -2) + 3;  
+    
+        startTime = new Date().getTime();  
+        stopvar = setInterval(updateFrame, 1);}
+        isDead = false;
+        console.log("respawned")
+       }
+     
     }
 }
+
+
 
 function mouseMove(evt){
     mouseX = evt.x;
