@@ -22,9 +22,14 @@ var deltaTime = 0;
 var mouseX;
 var mouseY;
 
+var mvmtSpeed=0.01;
+
 var isDead = false;
 var score = 0;
 
+var speed=0.1;
+var destZ=0;
+var destY=0;
 const KEY_0 = 48;
 const KEY_1 = 49;
 const KEY_2 = 50;
@@ -71,7 +76,9 @@ window.onload = function(){
     window.addEventListener("keyup", keyUp);
     window.addEventListener("keydown", keyDown);
     window.addEventListener("mousemove", mouseMove);
-
+    window.addEventListener("mousedown", mouseDown);
+    window.addEventListener("mouseup", mouseUp);
+    
     canvas = document.getElementById("canvasID");
     gl = canvas.getContext("webgl2");
     textCanvas = document.getElementById("textCanvasID");
@@ -144,14 +151,22 @@ function updateFrame(){
     //     cubeMesh.position.y = 0;
     //     jumping = false;
     // }
-
-    cubeMesh.position.z = ((mouseX / canvas.width) * 2) - 1;
-    cubeMesh.position.y = ((mouseY / canvas.height) * -2) + 3;
+    
+    if(cubeMesh.position.z >destZ){
+        cubeMesh.position.z-=mvmtSpeed;
+    }else if(cubeMesh.position.z <destZ){
+        cubeMesh.position.z+=mvmtSpeed;
+    }
+    if(cubeMesh.position.y >destY){
+        cubeMesh.position.y-=mvmtSpeed;
+    }else if(cubeMesh.position.y <destY){
+        cubeMesh.position.y+=mvmtSpeed;
+    }
 
     if(monkeyMesh.position.x <= -7){
         monkeyMesh.position.x = 20;
     } else {
-        monkeyMesh.position.x -= .1;
+        monkeyMesh.position.x -= speed;
     }
     monkeyMesh.orientation.rotate(new Vector3(0,0,1), 1 * deltaTime);
     
@@ -172,7 +187,11 @@ function updateFrame(){
     deltaTime = (endTime - startTime) / 1000.0;
     startTime = endTime;
 }
-
+function seekMouse(){
+ //   cubeMesh.position.z = (((mouseX / canvas.width) * 8) -4);
+  //  cubeMesh.position.y = (((mouseY / canvas.height) * -8) +6);
+  
+}
 function keyUp(event){ 
     console.log(camera.position);
     console.log(camera.orientation);
@@ -190,8 +209,19 @@ function keyUp(event){
 function mouseMove(evt){
     mouseX = evt.x;
     mouseY = evt.y;
+    destZ = (((mouseX / canvas.width) * 8) -4);
+    destY = (((mouseY / canvas.height) * -8) +6);
 }
+function mouseDown(evt){
+  speed=0.2;
 
+console.log("down");
+}
+function mouseUp(evt){
+    speed=0.1;
+
+    console.log("up");
+    }
 var an = true;
 function keyDown(event){
     switch(event.keyCode){
