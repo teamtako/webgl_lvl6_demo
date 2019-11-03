@@ -1,4 +1,6 @@
 var canvas;
+var textCanvas;
+var textCtx;
 var gl;
 
 var light;
@@ -16,6 +18,15 @@ var cubeSpeed = 10;
 var startTime = 0;
 var endTime = 0;
 var deltaTime = 0;
+
+var mouseX;
+var mouseY;
+
+var isDead = false;
+var score = 0;
+
+
+var difficulty;
 
 const KEY_0 = 48;
 const KEY_1 = 49;
@@ -62,9 +73,18 @@ const KEY_SPACE = 32;
 window.onload = function(){
     window.addEventListener("keyup", keyUp);
     window.addEventListener("keydown", keyDown);
+    window.addEventListener("mousemove", mouseMove);
 
     canvas = document.getElementById("canvasID");
     gl = canvas.getContext("webgl2");
+    textCanvas = document.getElementById("textCanvasID");
+    textCtx = textCanvas.getContext("2d");
+
+    textCanvas.style.position = "absolute";
+    textCanvas.style.left = "0px";
+    textCanvas.style.top = "0px";
+    textCanvas.width = window.innerWidth * 0.95;
+    textCanvas.height = window.innerHeight * 0.95;
 
     canvas.width = window.innerWidth * 0.95;
     canvas.height = window.innerHeight * 0.95;
@@ -75,31 +95,42 @@ window.onload = function(){
 
     camera = new Camera();
     camera.setPerspectiveProjection(70.0, canvas.width / canvas.height, 0.001, 1000.0);
-    camera.position = new Vector3(5, 5, 10);
-    camera.orientation = new Quaternion(0.2, 0, 0, 1);
+    camera.position = new Vector3(-5, 2, 0);
+    camera.orientation = new Quaternion(0, 1, 0, 1);
     camera.updateView(0);
 
     initTexturedMeshRenderer();
+    initSkyboxRenderer();
+
+    loadSkyboxFaceImage(skyboxImageData[0], 256, 256, "-x");
+    loadSkyboxFaceImage(skyboxImageData[1], 256, 256, "-z");
+    loadSkyboxFaceImage(skyboxImageData[2], 256, 256, "+x");
+    loadSkyboxFaceImage(skyboxImageData[3], 256, 256, "+z");
+    loadSkyboxFaceImage(skyboxImageData[4], 256, 256, "+y");
+    loadSkyboxFaceImage(skyboxImageData[5], 256, 256, "-y");
 
     monkeyMesh = createTexturedMesh(monkeyData[0], monkeyData[1]);
-    monkeyMesh.textureID = generateGLTexture2D(monkeyPixels, 1024, 1024);
+    //monkeyMesh.textureID = generateGLTexture2D(monkeyPixels, 1024, 1024);
     monkeyMesh.orientation.rotate(new Vector3(0, 1, 0), -Math.PI);
 
     let verts = [];
     let inds = [];
     generateUnitCubeVerticesIndexedWithNormalsTexCoords(verts, inds);
-    this.cubeMesh = createTexturedMesh(verts, inds);
-    cubeMesh.position
-    cubeMesh.position = new Vector3(20, 0, 0);
+    //this.cubeMesh = createTexturedMesh(verts, inds);
+    cubeMesh = createTexturedMesh(missileData[0], missileData[1]);
+    cubeMesh.orientation.rotate(new Vector3(0, 1, 0), -Math.PI);
     meshes = [monkeyMesh, cubeMesh];
 
     startTime = new Date().getTime();
-    setInterval(updateFrame, 1);
+    setInterval(updateFrame, 1 );
+        monkeyMesh.position.x -= (.1 );
+    difficulty = 1;
 }
 
 function checkIntersection(m1, m2){
     dist = Vector3.sub(m1.position, m2.position);
-    if(Vector3.length(dist) < 1){
+    if(Vector3.length(dist) < 4){
+        m1.verts
         gl.clearColor(1, 0, 0, 1);
     }else{
         gl.clearColor(0.5, 0.7, 1.0, 1.0);
@@ -112,25 +143,58 @@ function updateFrame(){
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.clear(gl.DEPTH_BUFFER_BIT);
 
-    verticalVelocity -= gravity * deltaTime;
-    monkeyMesh.position.y += verticalVelocity;
-    if(monkeyMesh.position.y < 0){
-        monkeyMesh.position.y = 0;
-        jumping = false;
-    }
+    // verticalVelocity -= gravity * deltaTime;
+    // cubeMesh.position.y += verticalVelocity;
+    // if(cubeMesh.position.y < 0){
+    //     cubeMesh.position.y = 0;
+    //     jumping = false;
+    // }
 
-    cubeMesh.position.x -= cubeSpeed * deltaTime;
-    if(cubeMesh.position.x <= -7){
-        cubeMesh.position.x = 20;
-    }
+    cubeMesh.position.z = ((mouseX / canvas.width) * 8) - 4;
+    cubeMesh.position.y = ((mouseY / canvas.height) * -8) + 6;
 
+    if(monkeyMesh.position.x <= -7){
+        monkeyMesh.position.x = 80 / (difficulty);
+        monkeyMesh.orientation.rotate(new Vector3(Math.random() * 360,Math.random() * 360,Math.random() * 360), 1 * deltaTime);
+        monkeyMesh.position.z = (Math.random() - .5) * 8;
+        monkeyMesh.position.y = Math.random() * 3;
+        console.log("" + monkeyMesh.position.y);
+    } else {
+        monkeyMesh.position.x -= (.1 * difficulty);
+        if(difficulty < 3){
+        difficulty += .001;
+        } else {
+            monkeyMesh.position.y += (cubeMesh.position.y - monkeyMesh.position.y) * .01;
+            monkeyMesh.position.z += (cubeMesh.position.z - monkeyMesh.position.z)* .01;
+        }
+        
+    }
+    monkeyMesh.orientation.rotate(new Vector3(0,0,1), 1 * deltaTime);
+    
+    if(Vector3.length(Vector3.sub(monkeyMesh.position,cubeMesh.position)) < 1.2)
+    {
+        score = 0;
+        difficulty = 1;
+    }
+    
     camera.updateView(deltaTime);
     renderTexturedMeshes(meshes, camera, new Vector3(4, 4, 4));
+    renderSkybox(camera.projectionMatrix, camera.orientation);
+    textCtx.font = "30px Arial";
+    textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+    if(isDead){
+        textCtx.fillText("You're Dead!", 100, 100);
+    }else{
+        textCtx.fillText("Score: " + score, 100, 100);
+    }
+    score += deltaTime;
 
     endTime = new Date().getTime();
     deltaTime = (endTime - startTime) / 1000.0;
     startTime = endTime;
 }
+
+function AsteroidSeek(){}
 
 function keyUp(event){ 
     console.log(camera.position);
@@ -144,6 +208,11 @@ function keyUp(event){
             break;
         }
     }
+}
+
+function mouseMove(evt){
+    mouseX = evt.x;
+    mouseY = evt.y;
 }
 
 var an = true;
