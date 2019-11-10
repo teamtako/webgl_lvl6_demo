@@ -26,6 +26,7 @@ var mvmtSpeed=0.01;
 
 var isDead = false;
 var score = 0;
+var mainMenu = true;
 
 var speed=0.1;
 var destZ=0;
@@ -140,19 +141,9 @@ function checkIntersection(m1, m2){
 }
 
 function updateFrame(){
-    checkIntersection(monkeyMesh, cubeMesh);
-
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.clear(gl.DEPTH_BUFFER_BIT);
-
-    // verticalVelocity -= gravity * deltaTime;
-    // cubeMesh.position.y += verticalVelocity;
-    // if(cubeMesh.position.y < 0){
-    //     cubeMesh.position.y = 0;
-    //     jumping = false;
-    // }
-    
-    if(cubeMesh.position.z >destZ){
+    if(cubeMesh.position.z >destZ){  //cubeMesh is missile mesh
         cubeMesh.position.z-=mvmtSpeed;
     }else if(cubeMesh.position.z <destZ){
         cubeMesh.position.z+=mvmtSpeed;
@@ -163,26 +154,30 @@ function updateFrame(){
         cubeMesh.position.y+=mvmtSpeed;
     }
 
-    if(monkeyMesh.position.x <= -7){
+    if(monkeyMesh.position.x <= -7){ //monkeyMesh is asteroid mesh 
         monkeyMesh.position.x = 20;
     } else {
         monkeyMesh.position.x -= speed;
     }
     monkeyMesh.orientation.rotate(new Vector3(0,0,1), 1 * deltaTime);
     
-    
     camera.updateView(deltaTime);
     renderTexturedMeshes(meshes, camera, new Vector3(4, 4, 4));
     renderSkybox(camera.projectionMatrix, camera.orientation);
-    textCtx.font = "30px Arial";
-    textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
-    if(isDead){
-        textCtx.fillText("You're Dead!", 100, 100);
-    }else{
-        textCtx.fillText("Score: " + score, 100, 100);
+    if(mainMenu) {
+        textCtx.font = "100px Arial";
+        textCtx.fillText("Press Space to Start Epic Game", 100, 200);
+    } else {
+        textCtx.font = "30px Arial";
+        textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+        if(isDead){
+            textCtx.fillText("You're Dead!", 100, 100);
+        }else{
+            textCtx.fillText("Score: " + score, 100, 100);
+        }
+        score += deltaTime;
+        checkIntersection(monkeyMesh, cubeMesh);
     }
-    score += deltaTime;
-
     endTime = new Date().getTime();
     deltaTime = (endTime - startTime) / 1000.0;
     startTime = endTime;
@@ -225,6 +220,8 @@ function mouseUp(evt){
 var an = true;
 function keyDown(event){
     switch(event.keyCode){
-        
+        case KEY_SPACE:
+            mainMenu = false;
+            monkeyMesh.position.x = 20
     }
 }
