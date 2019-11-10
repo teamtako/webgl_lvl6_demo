@@ -10,7 +10,7 @@ var monkeyMesh;
 var cubeMesh;
 var meshes = [];
 
-var rein = 0;
+
 var stopvar;
 var verticalVelocity = 0;
 var gravity = 1;
@@ -88,7 +88,7 @@ window.onload = function(){
     canvas.width = window.innerWidth * 0.95;
     canvas.height = window.innerHeight * 0.95;
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.enable(gl.CULL_FACE);
+    //gl.enable(gl.CULL_FACE);
     gl.clearColor(0.5, 0.7, 1.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
@@ -129,14 +129,7 @@ window.onload = function(){
         8, 9, 10, 10, 11, 8,
         12, 13, 14, 14, 15, 12,
         16, 17, 18, 18, 19, 16,
-        20, 21, 22, 22, 23, 20
-    ];
-    camera = new Camera();
-    camera.setPerspectiveProjection(70.0, canvas.width / canvas.height, 0.001, 1000.0);
-    camera.position = new Vector3(-5, 2, 0);
-    camera.orientation = new Quaternion(0, 1, 0, 1);
-    camera.updateView(0);
-
+        20, 21, 22, 22, 23, 20 ]; camera = new Camera(); camera.setPerspectiveProjection(70.0, canvas.width / canvas.height, 0.001, 1000.0); camera.position = new Vector3(-5, 2, 0); camera.orientation = new Quaternion(0, 1, 0, 1); camera.updateView(0);
     initTexturedMeshRenderer();
     initSkyboxRenderer();
 
@@ -199,15 +192,16 @@ function updateFrame(){
         monkeyMesh.position.x -= .1;
     }
     monkeyMesh.orientation.rotate(new Vector3(0,0,1), 1 * deltaTime);
-    rein++;
+   
     
     camera.updateView(deltaTime);
     renderTexturedMeshes(meshes, camera, new Vector3(4, 4, 4));
     renderSkybox(camera.projectionMatrix, camera.orientation);
     textCtx.font = "30px Arial";
+    textCtx.fillStyle = "white";
     textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
-    if(isDead && rein > 20){
-        textCtx.fillText("You're Dead!", 100, 100);
+    if(isDead){
+        textCtx.fillText("You're Dead! Press S to restart", 100, 100);
         clearInterval(stopvar);
         console.log("dying");
     }else{
@@ -228,12 +222,15 @@ function keyUp(event){
         case KEY_S:{
         console.log("press works");
         if(isDead == true) {
-        gl.clearColor(0.5, 0.7, 1.0, 1.0);  
-        cubeMesh.position.z = ((mouseX / canvas.width) * 2) + -1;
-    cubeMesh.position.y = ((mouseY / canvas.height) * -2) + 3;  
-    
-        startTime = new Date().getTime();  
-        stopvar = setInterval(updateFrame, 1);}
+           
+            gl.clearColor(0.5, 0.7, 1.0, 1.0);  
+            cubeMesh.position.z = ((mouseX / canvas.width) * 2) + -1;
+            monkeyMesh.position.x = 22;
+            cubeMesh.position.y = ((mouseY / canvas.height) * -2) + 3;  
+            score = 0;
+            startTime = new Date().getTime();  
+            stopvar = setInterval(updateFrame, 1);
+    }
         isDead = false;
         console.log("respawned")
        }
