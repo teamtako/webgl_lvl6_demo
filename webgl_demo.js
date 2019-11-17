@@ -24,7 +24,7 @@ var deltaTime = 0;
 var mouseX;
 var mouseY;
 
-var mvmtSpeed=0.01;
+var mvmtSpeed = 0.01;
 
 var isDead = false;
 var score = 0;
@@ -32,9 +32,9 @@ var mainMenu = true;
 
 var difficulty;
 
-var speed=0.1;
-var destZ=0;
-var destY=0;
+var speed = 0.1;
+var destZ = 0;
+var destY = 0;
 
 const KEY_0 = 48;
 const KEY_1 = 49;
@@ -78,13 +78,13 @@ const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
 const KEY_SPACE = 32;
 
-window.onload = function(){
+window.onload = function () {
     window.addEventListener("keyup", keyUp);
     window.addEventListener("keydown", keyDown);
     window.addEventListener("mousemove", mouseMove);
     window.addEventListener("mousedown", mouseDown);
     window.addEventListener("mouseup", mouseUp);
-    
+
     canvas = document.getElementById("canvasID");
     gl = canvas.getContext("webgl2");
     textCanvas = document.getElementById("textCanvasID");
@@ -104,35 +104,35 @@ window.onload = function(){
     gl.enable(gl.DEPTH_TEST);
 
     let vertices = [
-        -0.5, -0.5, 0.5,  0, 0, 1,     0.0, 1.0,
-        -0.5,  0.5, 0.5,  0, 0, 1,     0.0, 0.0,
-         0.5,  0.5, 0.5,  0, 0, 1,     1.0, 0.0,
-         0.5, -0.5, 0.5,  0, 0, 1,     1.0, 1.0,
+        -0.5, -0.5, 0.5, 0, 0, 1, 0.0, 1.0,
+        -0.5, 0.5, 0.5, 0, 0, 1, 0.0, 0.0,
+        0.5, 0.5, 0.5, 0, 0, 1, 1.0, 0.0,
+        0.5, -0.5, 0.5, 0, 0, 1, 1.0, 1.0,
 
-         0.5, -0.5, -0.5,  0, 0, -1,     0.0, 1.0,
-         0.5,  0.5, -0.5,  0, 0, -1,     0.0, 0.0,
-        -0.5,  0.5, -0.5,  0, 0, -1,     1.0, 0.0,
-        -0.5, -0.5, -0.5,  0, 0, -1,     1.0, 1.0,
+        0.5, -0.5, -0.5, 0, 0, -1, 0.0, 1.0,
+        0.5, 0.5, -0.5, 0, 0, -1, 0.0, 0.0,
+        -0.5, 0.5, -0.5, 0, 0, -1, 1.0, 0.0,
+        -0.5, -0.5, -0.5, 0, 0, -1, 1.0, 1.0,
 
-         0.5, -0.5,  0.5,  1, 0, 0,     0.0, 1.0,
-         0.5,  0.5,  0.5,  1, 0, 0,     0.0, 0.0,
-         0.5,  0.5, -0.5,  1, 0, 0,     1.0, 0.0,
-         0.5, -0.5, -0.5,  1, 0, 0,     1.0, 1.0,
+        0.5, -0.5, 0.5, 1, 0, 0, 0.0, 1.0,
+        0.5, 0.5, 0.5, 1, 0, 0, 0.0, 0.0,
+        0.5, 0.5, -0.5, 1, 0, 0, 1.0, 0.0,
+        0.5, -0.5, -0.5, 1, 0, 0, 1.0, 1.0,
 
-        -0.5, -0.5, -0.5,  -1, 0, 0,     0.0, 1.0,
-        -0.5,  0.5, -0.5,  -1, 0, 0,     0.0, 0.0,
-        -0.5,  0.5,  0.5,  -1, 0, 0,     1.0, 0.0,
-        -0.5, -0.5,  0.5,  -1, 0, 0,     1.0, 1.0,
+        -0.5, -0.5, -0.5, -1, 0, 0, 0.0, 1.0,
+        -0.5, 0.5, -0.5, -1, 0, 0, 0.0, 0.0,
+        -0.5, 0.5, 0.5, -1, 0, 0, 1.0, 0.0,
+        -0.5, -0.5, 0.5, -1, 0, 0, 1.0, 1.0,
 
-        -0.5,  0.5,  0.5,  0, 1, 0,     0.0, 1.0,
-        -0.5,  0.5, -0.5,  0, 1, 0,     0.0, 0.0,
-         0.5,  0.5, -0.5,  0, 1, 0,     1.0, 0.0,
-         0.5,  0.5,  0.5,  0, 1, 0,     1.0, 1.0,
+        -0.5, 0.5, 0.5, 0, 1, 0, 0.0, 1.0,
+        -0.5, 0.5, -0.5, 0, 1, 0, 0.0, 0.0,
+        0.5, 0.5, -0.5, 0, 1, 0, 1.0, 0.0,
+        0.5, 0.5, 0.5, 0, 1, 0, 1.0, 1.0,
 
-        -0.5, -0.5, -0.5,  0, -1, 0,     0.0, 1.0,
-        -0.5, -0.5,  0.5,  0, -1, 0,     0.0, 0.0,
-         0.5, -0.5,  0.5,  0, -1, 0,     1.0, 0.0,
-         0.5, -0.5, -0.5,  0, -1, 0,     1.0, 1.0,
+        -0.5, -0.5, -0.5, 0, -1, 0, 0.0, 1.0,
+        -0.5, -0.5, 0.5, 0, -1, 0, 0.0, 0.0,
+        0.5, -0.5, 0.5, 0, -1, 0, 1.0, 0.0,
+        0.5, -0.5, -0.5, 0, -1, 0, 1.0, 1.0,
     ];
     indices = [
         0, 1, 2, 2, 3, 0,
@@ -140,7 +140,7 @@ window.onload = function(){
         8, 9, 10, 10, 11, 8,
         12, 13, 14, 14, 15, 12,
         16, 17, 18, 18, 19, 16,
-        20, 21, 22, 22, 23, 20 ]; camera = new Camera(); camera.setPerspectiveProjection(70.0, canvas.width / canvas.height, 0.001, 1000.0); camera.position = new Vector3(-5, 2, 0); camera.orientation = new Quaternion(0, 1, 0, 1); camera.updateView(0);
+        20, 21, 22, 22, 23, 20]; camera = new Camera(); camera.setPerspectiveProjection(70.0, canvas.width / canvas.height, 0.001, 1000.0); camera.position = new Vector3(-5, 2, 0); camera.orientation = new Quaternion(0, 1, 0, 1); camera.updateView(0);
     initTexturedMeshRenderer();
     initSkyboxRenderer();
 
@@ -165,39 +165,41 @@ window.onload = function(){
 
     startTime = new Date().getTime();
 
-    setInterval(updateFrame, 1 );
-        monkeyMesh.position.x -= (.1 );
+
+    monkeyMesh.position.x -= (.1);
     difficulty = 1;
-   stopvar =  setInterval(updateFrame, 1 );
+    setInterval(updateFrame, 1);
+    stopvar = setInterval(updateFrame, 1);
 
 }
 
-function checkIntersection(m1, m2){
+function checkIntersection(m1, m2) {
     dist = Vector3.sub(m1.position, m2.position);
-    if(Vector3.length(dist) < 1){
+    if (Vector3.length(dist) < 1) {
         m1.verts
         gl.clearColor(1, 0, 0, 1);
         isDead = true;
+
         console.log("should Be dead");
 
-    }else{
+    } else {
         gl.clearColor(0.5, 0.7, 1.0, 1.0);
-        isDead = false;
+
     }
 }
 
-function updateFrame(){
+function updateFrame() {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.clear(gl.DEPTH_BUFFER_BIT);
-    if(cubeMesh.position.z >destZ){  //cubeMesh is missile mesh
-        cubeMesh.position.z-=mvmtSpeed;
-    }else if(cubeMesh.position.z <destZ){
-        cubeMesh.position.z+=mvmtSpeed;
+    if (cubeMesh.position.z > destZ) {  //cubeMesh is missile mesh
+        cubeMesh.position.z -= mvmtSpeed;
+    } else if (cubeMesh.position.z < destZ) {
+        cubeMesh.position.z += mvmtSpeed;
     }
-    if(cubeMesh.position.y >destY){
-        cubeMesh.position.y-=mvmtSpeed;
-    }else if(cubeMesh.position.y <destY){
-        cubeMesh.position.y+=mvmtSpeed;
+    if (cubeMesh.position.y > destY) {
+        cubeMesh.position.y -= mvmtSpeed;
+    } else if (cubeMesh.position.y < destY) {
+        cubeMesh.position.y += mvmtSpeed;
     }
 
 
@@ -211,37 +213,36 @@ function updateFrame(){
     cubeMesh.position.z = ((mouseX / canvas.width) * 8) - 4;
     cubeMesh.position.y = ((mouseY / canvas.height) * -8) + 6;
 
-    if(monkeyMesh.position.x <= -7){
+    if (monkeyMesh.position.x <= -7) {
         monkeyMesh.position.x = 80 / (difficulty);
-        monkeyMesh.orientation.rotate(new Vector3(Math.random() * 360,Math.random() * 360,Math.random() * 360), 1 * deltaTime);
+        monkeyMesh.orientation.rotate(new Vector3(Math.random() * 360, Math.random() * 360, Math.random() * 360), 1 * deltaTime);
         monkeyMesh.position.z = (Math.random() - .5) * 8;
         monkeyMesh.position.y = Math.random() * 3;
         console.log("" + monkeyMesh.position.y);
     } else {
         monkeyMesh.position.x -= (.1 * difficulty);
-        if(difficulty < 3){
-        difficulty += .001;
+        if (difficulty < 3) {
+            difficulty += .001;
         } else {
             monkeyMesh.position.y += (cubeMesh.position.y - monkeyMesh.position.y) * .01;
-            monkeyMesh.position.z += (cubeMesh.position.z - monkeyMesh.position.z)* .01;
+            monkeyMesh.position.z += (cubeMesh.position.z - monkeyMesh.position.z) * .01;
         }
-        
+
     }
-    monkeyMesh.orientation.rotate(new Vector3(0,0,1), 1 * deltaTime);
-    
-    if(Vector3.length(Vector3.sub(monkeyMesh.position,cubeMesh.position)) < 1.2)
-    {
+    monkeyMesh.orientation.rotate(new Vector3(0, 0, 1), 1 * deltaTime);
+
+    if (Vector3.length(Vector3.sub(monkeyMesh.position, cubeMesh.position)) < 1.2) {
         score = 0;
         difficulty = 1;
     }
-    
-    if(monkeyMesh.position.x <= -7){ //monkeyMesh is asteroid mesh 
+
+    if (monkeyMesh.position.x <= -7) { //monkeyMesh is asteroid mesh 
         monkeyMesh.position.x = 20;
     } else {
         monkeyMesh.position.x -= speed;
     }
-    monkeyMesh.orientation.rotate(new Vector3(0,0,1), 1 * deltaTime);
-    
+    monkeyMesh.orientation.rotate(new Vector3(0, 0, 1), 1 * deltaTime);
+
     camera.updateView(deltaTime);
     renderTexturedMeshes(meshes, camera, new Vector3(4, 4, 4));
     renderSkybox(camera.projectionMatrix, camera.orientation);
@@ -249,75 +250,76 @@ function updateFrame(){
     textCtx.font = "30px Arial";
     textCtx.fillStyle = "white";
     textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
-    if(isDead){
-        textCtx.fillText("You're Dead! Press S to restart", 100, 100);
-        clearInterval(stopvar);
-        console.log("dying");
-    }else{
-        textCtx.fillText("Score: " + score, 100, 100);
-    if(mainMenu) {
+    if (mainMenu) {
         textCtx.font = "100px Arial";
-        textCtx.fillText("Press Space to Start Epic Game", 100, 200);
+        textCtx.fillText("Press Space to Start Epic Game", 150, 200);
+        difficulty = 1;
     } else {
-        textCtx.font = "30px Arial";
-        textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
-        if(isDead){
-            textCtx.fillText("You're Dead!", 100, 100);
-        }else{
+        if (isDead) {
+            textCtx.font = "100px Arial";
+            textCtx.fillText("You're Dead! Press S to restart", 170, 200);
+            clearInterval(stopvar);
+            difficulty = 1;
+        } else {
             textCtx.fillText("Score: " + score, 100, 100);
+            textCtx.font = "30px Arial";
+            textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+            textCtx.fillText("Score: " + score, 100, 100);
+            score += deltaTime;
+            checkIntersection(monkeyMesh, cubeMesh);
         }
-        score += deltaTime;
-        checkIntersection(monkeyMesh, cubeMesh);
     }
     endTime = new Date().getTime();
     deltaTime = (endTime - startTime) / 1000.0;
     startTime = endTime;
+
 }
-function keyUp(event){ 
+function keyUp(event) {
     console.log(camera.position);
     console.log(camera.orientation);
-    
-    switch(event.keyCode){
-        case KEY_S:{
-        console.log("press works");
-        if(isDead == true) {
-           
-            gl.clearColor(0.5, 0.7, 1.0, 1.0);  
-            cubeMesh.position.z = ((mouseX / canvas.width) * 2) + -1;
-            monkeyMesh.position.x = 22;
-            cubeMesh.position.y = ((mouseY / canvas.height) * -2) + 3;  
-            score = 0;
-            startTime = new Date().getTime();  
-            stopvar = setInterval(updateFrame, 1);
-    }
-        isDead = false;
-        console.log("respawned")
-       }
-     
+
+    switch (event.keyCode) {
+        case KEY_S: {
+            console.log("press works");
+            if (isDead == true) {
+                gl.clearColor(0.5, 0.7, 1.0, 1.0);
+                cubeMesh.position.z = ((mouseX / canvas.width) * 2) + -1;
+                monkeyMesh.position.x = 22;
+                cubeMesh.position.y = ((mouseY / canvas.height) * -2) + 3;
+                score = 0;
+                startTime = new Date().getTime();
+                stopvar = setInterval(updateFrame, 1);
+            }
+            isDead = false;
+            console.log("respawned")
+        }
+
     }
 }
 
-function mouseMove(evt){
+function mouseMove(evt) {
     mouseX = evt.x;
     mouseY = evt.y;
-    destZ = (((mouseX / canvas.width) * 8) -4);
-    destY = (((mouseY / canvas.height) * -8) +6);
+    destZ = (((mouseX / canvas.width) * 8) - 4);
+    destY = (((mouseY / canvas.height) * -8) + 6);
 }
-function mouseDown(evt){
-  speed=0.2;
+function mouseDown(evt) {
+    speed = 0.2;
 
-console.log("down");
+    console.log("down");
 }
-function mouseUp(evt){
-    speed=0.1;
+function mouseUp(evt) {
+    speed = 0.1;
 
     console.log("up");
-    }
+}
 var an = true;
-function keyDown(event){
-    switch(event.keyCode){
+function keyDown(event) {
+    switch (event.keyCode) {
         case KEY_SPACE:
-            mainMenu = false;
-            monkeyMesh.position.x = 20
+            mainMenu = !mainMenu;
+            isDead = false;
+            monkeyMesh.position.x = 20;
+            break;
     }
 }
