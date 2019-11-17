@@ -30,9 +30,12 @@ var isDead = false;
 var score = 0;
 var mainMenu = true;
 
+var difficulty;
+
 var speed=0.1;
 var destZ=0;
 var destY=0;
+
 const KEY_0 = 48;
 const KEY_1 = 49;
 const KEY_2 = 50;
@@ -161,7 +164,12 @@ window.onload = function(){
     meshes = [monkeyMesh, cubeMesh];
 
     startTime = new Date().getTime();
+
+    setInterval(updateFrame, 1 );
+        monkeyMesh.position.x -= (.1 );
+    difficulty = 1;
    stopvar =  setInterval(updateFrame, 1 );
+
 }
 
 function checkIntersection(m1, m2){
@@ -192,6 +200,41 @@ function updateFrame(){
         cubeMesh.position.y+=mvmtSpeed;
     }
 
+
+    // verticalVelocity -= gravity * deltaTime;
+    // cubeMesh.position.y += verticalVelocity;
+    // if(cubeMesh.position.y < 0){
+    //     cubeMesh.position.y = 0;
+    //     jumping = false;
+    // }
+
+    cubeMesh.position.z = ((mouseX / canvas.width) * 8) - 4;
+    cubeMesh.position.y = ((mouseY / canvas.height) * -8) + 6;
+
+    if(monkeyMesh.position.x <= -7){
+        monkeyMesh.position.x = 80 / (difficulty);
+        monkeyMesh.orientation.rotate(new Vector3(Math.random() * 360,Math.random() * 360,Math.random() * 360), 1 * deltaTime);
+        monkeyMesh.position.z = (Math.random() - .5) * 8;
+        monkeyMesh.position.y = Math.random() * 3;
+        console.log("" + monkeyMesh.position.y);
+    } else {
+        monkeyMesh.position.x -= (.1 * difficulty);
+        if(difficulty < 3){
+        difficulty += .001;
+        } else {
+            monkeyMesh.position.y += (cubeMesh.position.y - monkeyMesh.position.y) * .01;
+            monkeyMesh.position.z += (cubeMesh.position.z - monkeyMesh.position.z)* .01;
+        }
+        
+    }
+    monkeyMesh.orientation.rotate(new Vector3(0,0,1), 1 * deltaTime);
+    
+    if(Vector3.length(Vector3.sub(monkeyMesh.position,cubeMesh.position)) < 1.2)
+    {
+        score = 0;
+        difficulty = 1;
+    }
+    
     if(monkeyMesh.position.x <= -7){ //monkeyMesh is asteroid mesh 
         monkeyMesh.position.x = 20;
     } else {
@@ -230,11 +273,6 @@ function updateFrame(){
     deltaTime = (endTime - startTime) / 1000.0;
     startTime = endTime;
 }
-function seekMouse(){
- //   cubeMesh.position.z = (((mouseX / canvas.width) * 8) -4);
-  //  cubeMesh.position.y = (((mouseY / canvas.height) * -8) +6);
-  
-}
 function keyUp(event){ 
     console.log(camera.position);
     console.log(camera.orientation);
@@ -258,8 +296,6 @@ function keyUp(event){
      
     }
 }
-
-
 
 function mouseMove(evt){
     mouseX = evt.x;
