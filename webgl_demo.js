@@ -24,9 +24,15 @@ var deltaTime = 0;
 var mouseX;
 var mouseY;
 
+var mvmtSpeed=0.01;
+
 var isDead = false;
 var score = 0;
+var mainMenu = true;
 
+var speed=0.1;
+var destZ=0;
+var destY=0;
 const KEY_0 = 48;
 const KEY_1 = 49;
 const KEY_2 = 50;
@@ -73,7 +79,9 @@ window.onload = function(){
     window.addEventListener("keyup", keyUp);
     window.addEventListener("keydown", keyDown);
     window.addEventListener("mousemove", mouseMove);
-
+    window.addEventListener("mousedown", mouseDown);
+    window.addEventListener("mouseup", mouseUp);
+    
     canvas = document.getElementById("canvasID");
     gl = canvas.getContext("webgl2");
     textCanvas = document.getElementById("textCanvasID");
@@ -171,32 +179,30 @@ function checkIntersection(m1, m2){
 }
 
 function updateFrame(){
-    checkIntersection(monkeyMesh, cubeMesh);
-
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.clear(gl.DEPTH_BUFFER_BIT);
+    if(cubeMesh.position.z >destZ){  //cubeMesh is missile mesh
+        cubeMesh.position.z-=mvmtSpeed;
+    }else if(cubeMesh.position.z <destZ){
+        cubeMesh.position.z+=mvmtSpeed;
+    }
+    if(cubeMesh.position.y >destY){
+        cubeMesh.position.y-=mvmtSpeed;
+    }else if(cubeMesh.position.y <destY){
+        cubeMesh.position.y+=mvmtSpeed;
+    }
 
-    // verticalVelocity -= gravity * deltaTime;
-    // cubeMesh.position.y += verticalVelocity;
-    // if(cubeMesh.position.y < 0){
-    //     cubeMesh.position.y = 0;
-    //     jumping = false;
-    // }
-
-    cubeMesh.position.z = ((mouseX / canvas.width) * 2) - 1;
-    cubeMesh.position.y = ((mouseY / canvas.height) * -2) + 3;
-
-    if(monkeyMesh.position.x <= -7){
+    if(monkeyMesh.position.x <= -7){ //monkeyMesh is asteroid mesh 
         monkeyMesh.position.x = 20;
     } else {
-        monkeyMesh.position.x -= .1;
+        monkeyMesh.position.x -= speed;
     }
     monkeyMesh.orientation.rotate(new Vector3(0,0,1), 1 * deltaTime);
-   
     
     camera.updateView(deltaTime);
     renderTexturedMeshes(meshes, camera, new Vector3(4, 4, 4));
     renderSkybox(camera.projectionMatrix, camera.orientation);
+
     textCtx.font = "30px Arial";
     textCtx.fillStyle = "white";
     textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
@@ -206,14 +212,29 @@ function updateFrame(){
         console.log("dying");
     }else{
         textCtx.fillText("Score: " + score, 100, 100);
+    if(mainMenu) {
+        textCtx.font = "100px Arial";
+        textCtx.fillText("Press Space to Start Epic Game", 100, 200);
+    } else {
+        textCtx.font = "30px Arial";
+        textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+        if(isDead){
+            textCtx.fillText("You're Dead!", 100, 100);
+        }else{
+            textCtx.fillText("Score: " + score, 100, 100);
+        }
+        score += deltaTime;
+        checkIntersection(monkeyMesh, cubeMesh);
     }
-    score += deltaTime;
-
     endTime = new Date().getTime();
     deltaTime = (endTime - startTime) / 1000.0;
     startTime = endTime;
 }
-
+function seekMouse(){
+ //   cubeMesh.position.z = (((mouseX / canvas.width) * 8) -4);
+  //  cubeMesh.position.y = (((mouseY / canvas.height) * -8) +6);
+  
+}
 function keyUp(event){ 
     console.log(camera.position);
     console.log(camera.orientation);
@@ -243,11 +264,24 @@ function keyUp(event){
 function mouseMove(evt){
     mouseX = evt.x;
     mouseY = evt.y;
+    destZ = (((mouseX / canvas.width) * 8) -4);
+    destY = (((mouseY / canvas.height) * -8) +6);
 }
+function mouseDown(evt){
+  speed=0.2;
 
+console.log("down");
+}
+function mouseUp(evt){
+    speed=0.1;
+
+    console.log("up");
+    }
 var an = true;
 function keyDown(event){
     switch(event.keyCode){
-        
+        case KEY_SPACE:
+            mainMenu = false;
+            monkeyMesh.position.x = 20
     }
 }
