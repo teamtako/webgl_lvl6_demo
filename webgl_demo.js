@@ -9,7 +9,7 @@ var camera;
 var monkeyMesh;
 var cubeMesh;
 var meshes = [];
-
+var rocketMesh;
 
 var stopvar;
 var verticalVelocity = 0;
@@ -29,6 +29,7 @@ var mvmtSpeed = 0.01;
 var isDead = false;
 var score = 0;
 var mainMenu = true;
+var missile = false;
 
 var difficulty;
 
@@ -152,6 +153,7 @@ window.onload = function () {
     loadSkyboxFaceImage(skyboxImageData[5], 256, 256, "-y");
 
     monkeyMesh = createTexturedMesh(vertices, indices);
+    rocketMesh = createTexturedMesh(rocketData[0], rocketData[1]);
     //monkeyMesh.textureID = generateGLTexture2D(monkeyPixels, 1024, 1024);
     monkeyMesh.orientation.rotate(new Vector3(0, 1, 0), -Math.PI);
     monkeyMesh.position.y = 2;
@@ -161,8 +163,11 @@ window.onload = function () {
     //this.cubeMesh = createTexturedMesh(verts, inds);
     cubeMesh = createTexturedMesh(missileData[0], missileData[1]);
     cubeMesh.orientation.rotate(new Vector3(0, 1, 0), -Math.PI);
-    meshes = [monkeyMesh, cubeMesh];
-
+    rocketMesh.scale.scale(0.1);
+    rocketMesh.orientation.rotate(new Vector3(1,0,0),2);
+    
+    meshes = [monkeyMesh, cubeMesh,rocketMesh];
+    
     startTime = new Date().getTime();
 
 
@@ -176,22 +181,16 @@ window.onload = function () {
 function checkIntersection(m1, m2) {
     dist = Vector3.sub(m1.position, m2.position);
     if (Vector3.length(dist) < 1) {
-        m1.verts
-        gl.clearColor(1, 0, 0, 1);
-        isDead = true;
-
-        console.log("should Be dead");
-
+        return true;
     } else {
-        gl.clearColor(0.5, 0.7, 1.0, 1.0);
-
+        return false;
     }
 }
 
 function updateFrame() {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.clear(gl.DEPTH_BUFFER_BIT);
-    if (cubeMesh.position.z > destZ) {  //cubeMesh is missile mesh
+    if (cubeMesh.position.z > destZ) {  //cubeMesh is spaceShip mesh
         cubeMesh.position.z -= mvmtSpeed;
     } else if (cubeMesh.position.z < destZ) {
         cubeMesh.position.z += mvmtSpeed;
@@ -201,14 +200,12 @@ function updateFrame() {
     } else if (cubeMesh.position.y < destY) {
         cubeMesh.position.y += mvmtSpeed;
     }
-
-
-    // verticalVelocity -= gravity * deltaTime;
-    // cubeMesh.position.y += verticalVelocity;
-    // if(cubeMesh.position.y < 0){
-    //     cubeMesh.position.y = 0;
-    //     jumping = false;
-    // }
+    console.log(missile)
+    if(missile) {
+        rocketMesh.position.x +=.2;
+    } else {
+        rocketMesh.position.x = -50.0;
+    }
 
     cubeMesh.position.z = ((mouseX / canvas.width) * 8) - 4;
     cubeMesh.position.y = ((mouseY / canvas.height) * -8) + 6;
@@ -230,17 +227,12 @@ function updateFrame() {
 
     }
     monkeyMesh.orientation.rotate(new Vector3(0, 0, 1), 1 * deltaTime);
-
-    if (Vector3.length(Vector3.sub(monkeyMesh.position, cubeMesh.position)) < 1.2) {
-        score = 0;
-        difficulty = 1;
-    }
-
     if (monkeyMesh.position.x <= -7) { //monkeyMesh is asteroid mesh 
         monkeyMesh.position.x = 20;
     } else {
         monkeyMesh.position.x -= speed;
     }
+    
     monkeyMesh.orientation.rotate(new Vector3(0, 0, 1), 1 * deltaTime);
 
     camera.updateView(deltaTime);
@@ -250,6 +242,9 @@ function updateFrame() {
     textCtx.font = "30px Arial";
     textCtx.fillStyle = "white";
     textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+    if(checkIntersection(monkeyMesh, rocketMesh)) {
+        monkeyMesh.position.x = -7;
+    }
     if (mainMenu) {
         textCtx.font = "100px Arial";
         textCtx.fillText("Press Space to Start Epic Game", 150, 200);
@@ -266,7 +261,9 @@ function updateFrame() {
             textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
             textCtx.fillText("Score: " + score, 100, 100);
             score += deltaTime;
-            checkIntersection(monkeyMesh, cubeMesh);
+            if(checkIntersection(monkeyMesh, cubeMesh)) {
+                isDead = true;
+            }
         }
     }
     endTime = new Date().getTime();
@@ -275,11 +272,31 @@ function updateFrame() {
 
 }
 function keyUp(event) {
-    console.log(camera.position);
-    console.log(camera.orientation);
-
     switch (event.keyCode) {
-        case KEY_S: {
+    } 
+}
+
+function mouseMove(evt) {
+    mouseX = evt.x;
+    mouseY = evt.y;
+    destZ = (((mouseX / canvas.width) * 8) - 4);
+    destY = (((mouseY / canvas.height) * -8) + 6);
+}
+function mouseDown(evt) {
+    if(!missile) {
+        rocketMesh.position = new Vector3(cubeMesh.position.x,cubeMesh.position.y,cubeMesh.position.z);
+        missile = true;
+    }
+    console.log("down");
+}
+function mouseUp(evt) {
+    missile = false;
+    console.log("up");
+}
+var an = true;
+function keyDown(event) {
+    switch (event.keyCode) {
+        case KEY_S:
             console.log("press works");
             if (isDead == true) {
                 gl.clearColor(0.5, 0.7, 1.0, 1.0);
@@ -292,30 +309,7 @@ function keyUp(event) {
             }
             isDead = false;
             console.log("respawned")
-        }
-
-    }
-}
-
-function mouseMove(evt) {
-    mouseX = evt.x;
-    mouseY = evt.y;
-    destZ = (((mouseX / canvas.width) * 8) - 4);
-    destY = (((mouseY / canvas.height) * -8) + 6);
-}
-function mouseDown(evt) {
-    speed = 0.2;
-
-    console.log("down");
-}
-function mouseUp(evt) {
-    speed = 0.1;
-
-    console.log("up");
-}
-var an = true;
-function keyDown(event) {
-    switch (event.keyCode) {
+            break;
         case KEY_SPACE:
             mainMenu = !mainMenu;
             isDead = false;
