@@ -16,6 +16,7 @@ var verticalVelocity = 0;
 var gravity = 1;
 var jumping = false;
 var cubeSpeed = 10;
+var highScore = 0;
 
 var startTime = 0;
 var endTime = 0;
@@ -189,6 +190,9 @@ function checkIntersection(m1, m2) {
 }
 
 function updateFrame() {
+    if(score > highScore) {
+        highScore = score;
+    }
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.clear(gl.DEPTH_BUFFER_BIT);
     if (cubeMesh.position.z > destZ) {  //cubeMesh is missile mesh
@@ -231,10 +235,7 @@ function updateFrame() {
     }
     monkeyMesh.orientation.rotate(new Vector3(0, 0, 1), 1 * deltaTime);
 
-    if (Vector3.length(Vector3.sub(monkeyMesh.position, cubeMesh.position)) < 1.2) {
-        score = 0;
-        difficulty = 1;
-    }
+  
 
     if (monkeyMesh.position.x <= -7) { //monkeyMesh is asteroid mesh 
         monkeyMesh.position.x = 20;
@@ -261,10 +262,9 @@ function updateFrame() {
             clearInterval(stopvar);
             difficulty = 1;
         } else {
-            textCtx.fillText("Score: " + score, 100, 100);
             textCtx.font = "30px Arial";
             textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
-            textCtx.fillText("Score: " + score, 100, 100);
+            textCtx.fillText("Score: " + score + "  Highscore: " + highScore, 100, 100);
             score += deltaTime;
             checkIntersection(monkeyMesh, cubeMesh);
         }
@@ -286,6 +286,7 @@ function keyUp(event) {
                 cubeMesh.position.z = ((mouseX / canvas.width) * 2) + -1;
                 monkeyMesh.position.x = 22;
                 cubeMesh.position.y = ((mouseY / canvas.height) * -2) + 3;
+              
                 score = 0;
                 startTime = new Date().getTime();
                 stopvar = setInterval(updateFrame, 1);
@@ -317,6 +318,7 @@ var an = true;
 function keyDown(event) {
     switch (event.keyCode) {
         case KEY_SPACE:
+            score = 0;
             mainMenu = !mainMenu;
             isDead = false;
             monkeyMesh.position.x = 20;
