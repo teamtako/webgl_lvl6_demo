@@ -10,6 +10,9 @@ var monkeyMesh;
 var cubeMesh;
 var meshes = [];
 
+var velocityX = 5;
+var velocityY = 5;
+
 var verticalVelocity = 0;
 var gravity = 1;
 var jumping = false;
@@ -99,8 +102,7 @@ window.onload = function(){
 
     camera = new Camera();
     camera.setPerspectiveProjection(70.0, canvas.width / canvas.height, 0.001, 1000.0);
-    camera.position = new Vector3(-5, 2, 0);
-    camera.orientation = new Quaternion(0, 1, 0, 1);
+    
     camera.updateView(0);
 
     initTexturedMeshRenderer();
@@ -113,8 +115,8 @@ window.onload = function(){
     loadSkyboxFaceImage(skyboxImageData[4], 256, 256, "+y");
     loadSkyboxFaceImage(skyboxImageData[5], 256, 256, "-y");
 
-    monkeyMesh = createTexturedMesh(monkeyData[0], monkeyData[1]);
-    //monkeyMesh.textureID = generateGLTexture2D(monkeyPixels, 1024, 1024);
+    monkeyMesh = createTexturedMesh(asteroidData[0], asteroidData[1]);
+    monkeyMesh.textureID = generateGLTexture2D(monkeyTexture, 256, 256);
     monkeyMesh.orientation.rotate(new Vector3(0, 1, 0), -Math.PI);
 
     let verts = [];
@@ -125,7 +127,6 @@ window.onload = function(){
     cubeMesh.orientation.rotate(new Vector3(0, 1, 0), -Math.PI);
     meshes = [monkeyMesh, cubeMesh];
 
-    this.camera.orientation.rotate(new Vector3(0,1,0),0.1);
 
     startTime = new Date().getTime();
     setInterval(updateFrame, 1 );
@@ -153,9 +154,8 @@ function updateFrame(){
     //     cubeMesh.position.y = 0;
     //     jumping = false;
     // }
-    
-    camera.position.z = cubeMesh.position.z - 3.2;
-    camera.position.y = cubeMesh.position.y + 1;
+    let nv = new Vector3(cubeMesh.position.x - 4, 0, 0);  
+    camera.lookAt(nv, cubeMesh.position, new Vector3(0,1,0));
 
     if(cubeMesh.position.z >destZ){
         cubeMesh.position.z-=mvmtSpeed;
@@ -176,7 +176,7 @@ function updateFrame(){
     monkeyMesh.orientation.rotate(new Vector3(0,0,1), 1 * deltaTime);
     
     
-    camera.updateView(deltaTime);
+    //camera.updateView(deltaTime);
     renderTexturedMeshes(meshes, camera, new Vector3(4, 4, 4));
     renderSkybox(camera.projectionMatrix, camera.orientation);
     textCtx.font = "30px Arial";
@@ -214,6 +214,12 @@ function keyUp(event){
 function mouseMove(evt){
     mouseX = evt.x;
     mouseY = evt.y;
+    if(velocityX>0){
+        velocityX--;
+    }
+    if(velocityY>0){
+        velocityY--;
+    }
     destZ = (((mouseX / canvas.width) * 8) -4);
     destY = (((mouseY / canvas.height) * -8) +6);
 }
